@@ -1,48 +1,51 @@
 import requests
 from bs4 import BeautifulSoup
+import re
 
-headers = {
-    "User-Agent": "Mozilla/5.0"
-}
-
-def scrape_hepsiburada_product(url):
-    response = requests.get(url, headers=headers)
-    if response.status_code != 200:
-        return None
-
-    soup = BeautifulSoup(response.content, "html.parser")
-
-    try:
-        title = soup.find("h1", {"id": "product-name"}).text.strip()
-    except:
-        title = "Ürün adı bulunamadı"
-
-    try:
-        price = soup.find("span", {"data-bind": "markupText:'currentPriceBeforePoint'"}).text.strip()
-        price_fraction = soup.find("span", {"data-bind": "markupText:'currentPriceAfterPoint'"}).text.strip()
-        price = f"{price},{price_fraction} TL"
-    except:
-        price = "Fiyat bulunamadı"
-
-    try:
-        rating = soup.find("span", {"class": "rating-star"}).text.strip()
-    except:
-        rating = "Puan yok"
-
-    try:
-        total_reviews = soup.find("a", {"href": "#productReviews"}).text.strip()
-    except:
-        total_reviews = "Yorum yok"
-
-    reviews = []
-    review_tags = soup.find_all("div", class_="review-text")
-    for tag in review_tags[:5]:
-        reviews.append(tag.text.strip())
-
-    return {
-        "title": title,
-        "price": price,
-        "rating": rating,
-        "total_reviews": total_reviews,
-        "reviews": reviews
+def scrape_hepsiburada(url):
+    headers = {
+        "User-Agent": "Mozilla/5.0"
     }
+
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+    except Exception as e:
+        return {"error": f"Bağlantı sağlanamadı: {e}"}
+
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    try:
+        title = soup.find("h1", {"class": re.compile(".*product-name.*")}).get_text(strip=True)
+    except:
+        title = "Ürün başlığı alınamadı"
+
+    try:
+        price_tag = soup.find("span", {"class": re.compile(".*price.*")})
+        price = price_tag.get_text(strip=True).replace("\xa0TL", "").replace("TL", "")
+    except:
+        price = "Fiyat alınamadı"
+
+    try:
+        rating_tag = soup.find("span", {"class": re.compile(".*rating-star.*")})
+        rating = rating_tag.get_text(strip=True)
+    except:
+        rating = "Puan alınamadı"
+
+    try:
+        comment_section = soup.find("div", {"id": "comments-section"})
+        comments = comment_section.get_text(" ", strip=True) if comment_section else ""
+        pos_score = comments.lower().count("harika") + comments.lower().count("mükemmel")
+        neg_score = comments.lower().count("berbat") + comments.lower().count("kötü")
+    except:
+        pos_score, neg_score = 0, 0
+
+    summary = {
+        "title": title,
+        "price": f"{price} TL",
+        "rating": rating,
+        "positive_mentions": pos_score,
+        "negative_mentions": neg_score
+    }
+
+    return summary
