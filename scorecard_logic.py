@@ -12,7 +12,6 @@ def analyze_product_from_hepsiburada(url):
     except:
         rating = 0.0
 
-    # Skorlar
     satisfaction = int(rating / 5 * 100) if rating else 0
     flaw_score = 100 - satisfaction if satisfaction < 95 else random.randint(5, 15)
     feel_score = satisfaction - random.randint(3, 8)
