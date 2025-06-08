@@ -1,33 +1,26 @@
-from flask import Flask, request
-from twilio.twiml.messaging_response import MessagingResponse
-from scorecard_logic import analyze_by_product_name
+import requests
+from bs4 import BeautifulSoup
 
-app = Flask(__name__)
+def scrape_amazon(url):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+    }
 
-@app.route("/message", methods=['POST'])
-def message():
-    incoming_msg = request.values.get('Body', '').lower()
-    resp = MessagingResponse()
+    response = requests.get(url, headers=headers)
+    soup = BeautifulSoup(response.text, 'html.parser')
 
-    if incoming_msg:
-        result = analyze_by_product_name(incoming_msg)
-        reply = (
-            f"📌 {result['name']}\n"
-            f"💸 {result['price']}\n\n"
-            f"✅ Tatmin: {result['scores']['Satisfaction']['value']}\n"
-            f"{result['scores']['Satisfaction']['note']}\n\n"
-            f"🧯 Risk: {result['scores']['Risk']['value']}\n"
-            f"{result['scores']['Risk']['note']}\n\n"
-            f"💠 Hissiyat: {result['scores']['Feel']['value']}\n"
-            f"{result['scores']['Feel']['note']}\n\n"
-            f"🧪 Uzman Skoru: {result['scores']['Expert Test']['value']}\n"
-            f"{result['scores']['Expert Test']['note']}"
-        )
-    else:
-        reply = "Lütfen analiz etmem için bir ürün adı yaz."
+    name = soup.find(id='productTitle')
+    price = soup.find('span', {'class': 'a-price-whole'})
+    rating = soup.find('span', {'class': 'a-icon-alt'})
+    review_count = soup.find(id='acrCustomerReviewText')
 
-    resp.message(reply)
-    return str(resp)
+    # Yorumlar için dummy değer, gerçek yorumlar scraping gerektiriyor
+    comments = []
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    return {
+        "name": name.get_text(strip=True) if name else "Bilinmiyor",
+        "price": price.get_text(strip=True) + " TL" if price else "Fiyat Yok",
+        "average_rating": float(rating.get_text().split()[0].replace(',', '.')) if rating else 0,
+        "review_count": int(review_count.get_text().split()[0].replace('.', '')) if review_count else 0,
+        "comments": comments
+    }
