@@ -1,7 +1,6 @@
 from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
 from scorecard_logic import analyze_product_from_hepsiburada
-import os
 
 app = Flask(__name__)
 
@@ -17,28 +16,31 @@ def message():
             price = result["price"]
             scores = result["scores"]
 
-            reply = f"""📌 {name}
-💸 {price}
+            response_text = f"""
+📌 *{name}*
+💸 *Fiyat:* {price}
 
-✅ Tatmin: {scores['Satisfaction']['value']}/100
-{scores['Satisfaction']['note']}
+### Skorlar (100 üzerinden)
 
-🧯 Risk: {scores['Risk']['value']}/100
-{scores['Risk']['note']}
+✅ *Tatmin:* {scores['Satisfaction']['value']}
+_{scores['Satisfaction']['note']}_
 
-💠 Hissiyat: {scores['Feel']['value']}/100
-{scores['Feel']['note']}
+🧯 *Risk:* {scores['Risk']['value']}
+_{scores['Risk']['note']}_
 
-⚙️ Uzman Testi: {scores['Expert Test']['value']}
-{scores['Expert Test']['note']}"""
+💠 *Hissiyat:* {scores['Feel']['value']}
+_{scores['Feel']['note']}_
+
+⚙️ *Uzman Skoru:* {scores['Expert Test']['value']}
+_{scores['Expert Test']['note']}_
+"""
+            resp.message(response_text)
         except Exception as e:
-            reply = f"Ürün verileri alınırken hata oluştu: {e}"
+            resp.message("Üzgünüm, ürün verisini işlerken bir hata oluştu. Lütfen geçerli bir Hepsiburada linki gönderin.")
     else:
-        reply = "Lütfen geçerli bir Hepsiburada ürün linki gönderin."
+        resp.message("Lütfen Hepsiburada'dan bir ürün linki gönderin. Örn: https://www.hepsiburada.com/...")
 
-    resp.message(reply)
     return str(resp)
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=10000)
