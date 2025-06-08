@@ -1,3 +1,7 @@
+import requests
+from bs4 import BeautifulSoup
+import re
+
 def scrape_hepsiburada(url):
     headers = {
         "User-Agent": "Mozilla/5.0"
@@ -12,26 +16,24 @@ def scrape_hepsiburada(url):
     soup = BeautifulSoup(response.text, "html.parser")
 
     try:
-        title = soup.find("span", attrs={"id": "product-name"}).get_text(strip=True)
+        title = soup.find("h1", {"class": re.compile(".*product-name.*")}).get_text(strip=True)
     except:
-        title = "Ürün Bilgisi Yok"
+        title = "Ürün başlığı alınamadı"
 
     try:
-        price_tag = soup.find("div", class_="product-price-container")
-        price = price_tag.get_text(strip=True).split("TL")[0].strip() + " TL"
+        price_tag = soup.find("span", {"class": re.compile(".*price.*")})
+        price = price_tag.get_text(strip=True).replace("\xa0TL", "").replace("TL", "")
     except:
-        price = "Fiyat Bilgisi Yok"
+        price = "Fiyat alınamadı"
 
     try:
-        rating_tag = soup.find("span", class_="rating-star")
-        rating = float(rating_tag.get_text(strip=True).replace(",", "."))
+        rating_tag = soup.find("span", {"class": re.compile(".*rating-star.*")})
+        rating = rating_tag.get_text(strip=True)
     except:
-        rating = 0
+        rating = "0"
 
     return {
-        "name": title,
-        "price": price,
-        "average_rating": rating,
-        "review_count": 0,
-        "comments": []
+        "title": title,
+        "price": f"{price} TL",
+        "rating": rating
     }
