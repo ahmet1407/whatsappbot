@@ -1,21 +1,22 @@
-from scraper import scrape_hepsiburada
+from hepsiburada_scraper import scrape_hepsiburada
 import random
 
 def analyze_product_from_hepsiburada(url):
     data = scrape_hepsiburada(url)
-
-    name = data.get("name", "Ürün Bilgisi Yok")
+    
+    name = data.get("title", "Ürün Bilgisi Yok")
     price = data.get("price", "Fiyat Bilgisi Yok")
-    average_rating = data.get("average_rating", "0").replace(",", ".")
+    rating_raw = data.get("rating", "0")
     try:
-        average_rating = float(average_rating)
+        rating = float(rating_raw.replace(",", "."))
     except:
-        average_rating = random.uniform(3.5, 4.5)
+        rating = 0.0
 
-    satisfaction = int(average_rating / 5 * 100)
+    # Skorlar
+    satisfaction = int(rating / 5 * 100) if rating else 0
     flaw_score = 100 - satisfaction if satisfaction < 95 else random.randint(5, 15)
     feel_score = satisfaction - random.randint(3, 8)
-    expert_score = "-"  # Bağımsız test yok
+    expert_score = "-"
 
     return {
         "name": name,
@@ -23,7 +24,7 @@ def analyze_product_from_hepsiburada(url):
         "scores": {
             "Satisfaction": {
                 "value": satisfaction,
-                "note": f"Bu ürün {average_rating:.1f} ortalama puan aldı."
+                "note": f"Bu ürün {rating} ortalama puan aldı."
             },
             "Risk": {
                 "value": flaw_score,
