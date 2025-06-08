@@ -1,9 +1,7 @@
-def detect_platform(url):
-    if "hepsiburada.com" in url:
-        return "hepsiburada"
-    elif "trendyol.com" in url:
-        return "trendyol"
-    elif "amazon.com.tr" in url:
-        return "amazon"
-    else:
-        return "unknown"
+import re
+
+def clean_url(text):
+    """Yorum içinden düzgün bir Hepsiburada linki bulur."""
+    url_pattern = r"(https?://[^\s]+)"
+    match = re.search(url_pattern, text)
+    return match.group(0) if match else None
