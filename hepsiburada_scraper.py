@@ -5,38 +5,33 @@ def scrape_hepsiburada(url):
     headers = {
         "User-Agent": "Mozilla/5.0"
     }
-
     response = requests.get(url, headers=headers)
-    soup = BeautifulSoup(response.text, "html.parser")
+    soup = BeautifulSoup(response.content, "html.parser")
 
+    title = soup.find("h1").text.strip() if soup.find("h1") else "Ürün adı bulunamadı"
+    
     try:
-        name = soup.find("h1", class_="product-name best-price-trick").text.strip()
+        price = soup.find("span", {"data-bind": "markupText:'currentPriceBeforePoint'"}).text
+        price += "," + soup.find("span", {"data-bind": "markupText:'currentPriceAfterPoint'"}).text + " TL"
     except:
-        name = "Ürün adı alınamadı"
+        price = "Fiyat bulunamadı"
 
     try:
-        price = soup.find("span", class_="price").text.strip()
+        rating_text = soup.find("span", {"class": "rating-star"}).text.strip()
+        average_rating = float(rating_text.replace(",", "."))
     except:
-        price = "Fiyat alınamadı"
+        average_rating = None
 
     try:
-        rating_tag = soup.find("span", class_="overall-rating")
-        average_rating = float(rating_tag.text.strip().replace(",", "."))
-    except:
-        average_rating = 0
-
-    try:
-        review_count_tag = soup.find("span", class_="total-review-count")
-        review_count = int(review_count_tag.text.strip().split()[0])
+        review_count = soup.find("a", {"class": "product-review-count"}).text.strip().split()[0]
+        review_count = int(review_count.replace(".", ""))
     except:
         review_count = 0
 
-    comments = []
-
     return {
-        "name": name,
+        "name": title,
         "price": price,
         "average_rating": average_rating,
         "review_count": review_count,
-        "comments": comments
+        "comments": []
     }
