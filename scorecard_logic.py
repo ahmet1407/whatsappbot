@@ -6,17 +6,16 @@ def analyze_product_from_hepsiburada(url):
     
     name = data.get("name", "Ürün Bilgisi Yok")
     price = data.get("price", "Fiyat Bilgisi Yok")
-    comments = data.get("comments", [])
     average_rating = data.get("average_rating", 0)
     review_count = data.get("review_count", 0)
 
-    # Temel skorlar (gelişmiş NLP modeli sonrası daha akıllı yapılabilir)
+    # Temel skorlar
     satisfaction = int(float(average_rating) / 5 * 100) if average_rating else random.randint(70, 85)
     flaw_score = 100 - satisfaction if satisfaction < 95 else random.randint(5, 15)
     feel_score = satisfaction - random.randint(3, 8)
-    expert_score = "-"  # Bu platformda mevcut değil
+    expert_score = "-"  # Hepsiburada için mevcut değil
 
-    # Kısa açıklamalar
+    # Açıklamalar
     satisfaction_note = f"Bu ürün ortalama {average_rating} puanla {review_count}+ değerlendirme aldı."
     flaw_note = "Negatif yorumlar genellikle kargo, ambalaj veya fiyatla ilgili."
     feel_note = "Kullanıcılar genel olarak ürün kalitesinden ve tasarımından memnun."
