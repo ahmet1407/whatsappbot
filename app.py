@@ -22,9 +22,13 @@ def message():
                 reply += f"✅ {key}: {val['value']}\n{val['note']}\n\n"
 
         except Exception as e:
-            reply = f"Ürün analiz edilirken bir hata oluştu: {str(e)}"
+            reply = f"❌ Ürün analiz edilirken bir hata oluştu: {str(e)}"
     else:
-        reply = "Lütfen Hepsiburada ürün linki gönderin."
+        reply = "🔗 Lütfen geçerli bir Hepsiburada ürün linki gönderin."
 
     resp.message(reply)
     return str(resp)
+
+# Render.com uyumlu port
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=10000)
